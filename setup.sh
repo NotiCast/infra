@@ -1,9 +1,10 @@
 #!/bin/bash
 
-printf "Region: "
-read region
-printf "Messages Bucket Name: "
-read bucket_name
+# Don't set -eu in case policies/resources already exist
+set -x
+
+REGION="${REGION:-us-east-2}"
+BUCKET="${BUCKET:-noticast-messages}"
 
 for policy in $(ls iam/policies); do
   aws iam create-policy --policy-name "${policy%.*}" --policy-document file://iam/policies/$policy
@@ -21,4 +22,4 @@ aws sns create-topic --name play-message
 
 # write permission from the lambda to put MP3s into
 # read permission from the devices to pull MP3s from
-aws s3api create-bucket --bucket "$bucket_name" --region "$region" --create-bucket-configuration LocationConstraint="$region"
+aws s3api create-bucket --bucket "$BUCKET" --region "$REGION" --create-bucket-configuration LocationConstraint="$REGION"

@@ -7,7 +7,7 @@
       "s3:List*"
     ],
     "Resource": [
-      "arn:aws:s3:::messages/*.mp3"
+      "arn:aws:s3:::noticast-messages/*.mp3"
     ]
   }
 }

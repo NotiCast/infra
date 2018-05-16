@@ -62,7 +62,7 @@ resource "aws_iam_role" "lambda-sns-role" {
 
 data "aws_iam_policy_document" "lambda-sns-policy" {
   statement {
-    actions = ["sns:*"]
+    actions = ["sns:Publish"]
     resources = ["*"]
   }
 }
@@ -93,7 +93,7 @@ resource "aws_lambda_function" "message-lambda" {
 
 data "aws_iam_policy_document" "devices-policy" {
   statement {
-    actions = ["s3:Get*", "s3:List*"]
+    actions = ["s3:Get*", "sns:Subscribe", "sns:Unsubscribe"]
     resources = ["arn:aws:s3:::noticast-messages/*.mp3"]
   }
 }

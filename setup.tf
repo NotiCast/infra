@@ -91,23 +91,16 @@ resource "aws_lambda_function" "message-lambda" {
 # IoT policy for the devices
 # Since Terraform doesn't have good AWS IoT support... JSON in a heredoc.
 
-resource "aws_iot_policy" "devices-policy" {
-  name = "devices-policy"
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": {
-    "Effect": "Allow",
-    "Action": [
-      "s3:Get*",
-      "s3:List*"
-    ],
-    "Resource": [
-      "arn:aws:s3:::noticast-messages/*.mp3"
-    ]
+data "aws_iam_policy_document" "devices-policy" {
+  statement {
+    actions = ["s3:Get*", "s3:List*"]
+    resources = ["arn:aws:s3:::noticast-messages/*.mp3"]
   }
 }
-EOF
+
+resource "aws_iot_policy" "devices-policy" {
+  name = "devices-policy"
+  policy = "${data.aws_iam_policy_document.devices-policy.json}"
 }
 
 # Set up notifications, sent by lambda, received by IoT devices

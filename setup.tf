@@ -2,11 +2,21 @@ provider "aws" {
   region = "us-east-2"
 }
 
-# Some variables
-
 variable "bucket_name" {
   type = "string"
   default = "noticast-messages"
+}
+
+variable "state_bucket_name" {
+  type = "string"
+  default = "noticast-state"
+}
+
+terraform {
+  backend "s3" {
+    bucket = "noticast-state"
+    key = "terraform-state"
+  }
 }
 
 # REST API access point

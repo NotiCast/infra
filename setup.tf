@@ -7,11 +7,7 @@ variable "bucket_name" {
   default = "noticast-messages"
 }
 
-variable "state_bucket_name" {
-  type = "string"
-  default = "noticast-state"
-}
-
+# This will need to be changed per-deployment
 terraform {
   backend "s3" {
     bucket = "noticast-state"

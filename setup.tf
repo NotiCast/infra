@@ -201,3 +201,51 @@ resource "aws_sns_topic" "play-message" {
 resource "aws_s3_bucket" "messages" {
   bucket = "${var.bucket_name}"
 }
+
+# Set up and print out an API key for the lambda
+resource "aws_api_gateway_api_key" "messages-lambda" {
+  provider = "aws.edge"
+  name = "master-key-2"
+}
+
+resource "aws_api_gateway_deployment" "messages-api" {
+  provider = "aws.edge"
+
+  depends_on = ["aws_api_gateway_integration.messages-lambda"]
+  rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
+  stage_name  = "test"
+}
+
+resource "aws_api_gateway_base_path_mapping" "messages-api" {
+  provider = "aws.edge"
+
+  depends_on = ["aws_api_gateway_domain_name.messages-api"]
+  api_id = "${aws_api_gateway_rest_api.messages-api.id}"
+  stage_name = "${aws_api_gateway_deployment.messages-api.stage_name}"
+  domain_name = "${aws_api_gateway_domain_name.messages-api.domain_name}"
+}
+
+resource "aws_api_gateway_usage_plan" "master" {
+  provider = "aws.edge"
+  name = "master_plan"
+
+  api_stages {
+    api_id = "${aws_api_gateway_rest_api.messages-api.id}"
+    stage = "${aws_api_gateway_deployment.messages-api.stage_name}"
+  }
+}
+
+resource "aws_api_gateway_usage_plan_key" "master" {
+  provider = "aws.edge"
+  key_id = "${aws_api_gateway_api_key.messages-lambda.id}"
+  key_type = "API_KEY"
+  usage_plan_id = "${aws_api_gateway_usage_plan.master.id}"
+}
+
+output "api-key" {
+  value = "${aws_api_gateway_usage_plan_key.master.value}"
+}
+
+output "api-key-name" {
+  value = "${aws_api_gateway_usage_plan_key.master.name}"
+}

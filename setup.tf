@@ -69,6 +69,7 @@ resource "aws_api_gateway_integration" "messages-lambda" {
   uri = "${aws_lambda_function.message-lambda.invoke_arn}"
 }
 
+/*
 resource "aws_route53_zone" "primary" {
   name = "${var.root_name}"
 }
@@ -123,6 +124,7 @@ resource "aws_api_gateway_domain_name" "messages-api" {
     types = ["EDGE"]
   }
 }
+*/
 
 resource "aws_lambda_permission" "messages-lambda" {
   action = "lambda:InvokeFunction"
@@ -132,7 +134,7 @@ resource "aws_lambda_permission" "messages-lambda" {
 
 # IAM role and policy for the lambda
 
-data "aws_iam_policy_document" "lambda-sns-role-policy" {
+data "aws_iam_policy_document" "lambda-aws-role-policy" {
   statement {
     principals {
       type = "Service",
@@ -142,26 +144,26 @@ data "aws_iam_policy_document" "lambda-sns-role-policy" {
   }
 }
 
-resource "aws_iam_role" "lambda-sns-role" {
-  name = "lambda-sns"
-  assume_role_policy = "${data.aws_iam_policy_document.lambda-sns-role-policy.json}"
+resource "aws_iam_role" "lambda-aws-role" {
+  name = "lambda-aws"
+  assume_role_policy = "${data.aws_iam_policy_document.lambda-aws-role-policy.json}"
 }
 
-data "aws_iam_policy_document" "lambda-sns-policy" {
+data "aws_iam_policy_document" "lambda-aws-policy" {
   statement {
-    actions = ["sns:Publish"]
+    actions = ["iot:Publish", "s3:*", "polly:*"]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_policy" "lambda-sns-policy" {
-  name = "lambda-sns-policy"
-  policy = "${data.aws_iam_policy_document.lambda-sns-policy.json}"
+resource "aws_iam_policy" "lambda-aws-policy" {
+  name = "lambda-aws-policy"
+  policy = "${data.aws_iam_policy_document.lambda-aws-policy.json}"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda-sns-role-policy" {
-  role = "${aws_iam_role.lambda-sns-role.name}"
-  policy_arn = "${aws_iam_policy.lambda-sns-policy.arn}"
+resource "aws_iam_role_policy_attachment" "lambda-aws-role-policy" {
+  role = "${aws_iam_role.lambda-aws-role.name}"
+  policy_arn = "${aws_iam_policy.lambda-aws-policy.arn}"
 }
 
 # The lambda for signalling devices
@@ -169,9 +171,9 @@ resource "aws_iam_role_policy_attachment" "lambda-sns-role-policy" {
 resource "aws_lambda_function" "message-lambda" {
   filename = "message_lambda.zip"
   function_name = "message_lambda"
-  role = "${aws_iam_role.lambda-sns-role.arn}"
+  role = "${aws_iam_role.lambda-aws-role.arn}"
   handler = "lambda_function.lambda_handler"
-  source_code_hash = "${base64sha256("message_lambda.zip")}"
+  source_code_hash = "${base64sha256(file("message_lambda.zip"))}"
   runtime = "python3.6"
 }
 
@@ -180,8 +182,9 @@ resource "aws_lambda_function" "message-lambda" {
 
 data "aws_iam_policy_document" "devices-policy" {
   statement {
-    actions = ["s3:Get*", "sns:Subscribe", "sns:Unsubscribe"]
-    resources = ["arn:aws:s3:::noticast-messages/*.mp3"]
+    actions = ["s3:Get*", "iot:Publish", "iot:Subscribe", "iot:Connect",
+               "iot:Receive"]
+    resources = ["*"]
   }
 }
 
@@ -200,9 +203,19 @@ resource "aws_sns_topic" "play-message" {
 
 resource "aws_s3_bucket" "messages" {
   bucket = "${var.bucket_name}"
+  acl = "public-read"
+
+  lifecycle_rule {
+    enabled = true
+
+    expiration {
+      days = 1
+    }
+  }
 }
 
 # Set up and print out an API key for the lambda
+
 resource "aws_api_gateway_api_key" "messages-lambda" {
   provider = "aws.edge"
   name = "master-key-2"
@@ -216,6 +229,7 @@ resource "aws_api_gateway_deployment" "messages-api" {
   stage_name  = "test"
 }
 
+/*
 resource "aws_api_gateway_base_path_mapping" "messages-api" {
   provider = "aws.edge"
 
@@ -224,6 +238,7 @@ resource "aws_api_gateway_base_path_mapping" "messages-api" {
   stage_name = "${aws_api_gateway_deployment.messages-api.stage_name}"
   domain_name = "${aws_api_gateway_domain_name.messages-api.domain_name}"
 }
+*/
 
 resource "aws_api_gateway_usage_plan" "master" {
   provider = "aws.edge"
@@ -242,8 +257,12 @@ resource "aws_api_gateway_usage_plan_key" "master" {
   usage_plan_id = "${aws_api_gateway_usage_plan.master.id}"
 }
 
+output "api-url" {
+  value = "${aws_api_gateway_deployment.messages-api.invoke_url}"
+}
+
 output "api-key" {
-  value = "${aws_api_gateway_usage_plan_key.master.value}"
+  value = "${aws_api_gateway_api_key.messages-lambda.value}"
 }
 
 output "api-key-name" {

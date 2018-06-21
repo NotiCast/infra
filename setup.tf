@@ -264,7 +264,3 @@ output "api-url" {
 output "api-key" {
   value = "${aws_api_gateway_api_key.messages-lambda.value}"
 }
-
-output "api-key-name" {
-  value = "${aws_api_gateway_usage_plan_key.master.name}"
-}

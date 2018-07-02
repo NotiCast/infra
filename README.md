@@ -32,7 +32,9 @@ Queue messages for NotiCast devices
 **Request Type:** JSON
 
 - `message: string` - Required - Message to send to devices
-- `voiceid: string` - Optional - AWS Polly VoiceID to use
+- `voice_id: string` - Optional - AWS Polly VoiceID to use
+- `testing: bool` - Optional - Don't send out messages to the devices
+  - Only works in `test`/`dev` stages
 
 **Response Type:** JSON
 

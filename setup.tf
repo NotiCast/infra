@@ -1,5 +1,21 @@
+# vim:set et sw=2 ts=2 foldmethod=marker:
+
+# This will need to be changed per-deployment
+terraform {
+  backend "s3" {
+    bucket = "noticast-state"
+    key = "terraform-state"
+  }
+}
+
+# Variables {{{
+variable "aws_region" {
+  type = "string"
+  default = "us-east-2"
+}
+
 provider "aws" {
-  region = "us-east-2"
+  region = "${var.aws_region}"
 }
 
 variable "bucket_name" {
@@ -17,15 +33,9 @@ variable "domain_name" {
   default = "api.notica.st"
 }
 
-# This will need to be changed per-deployment
-terraform {
-  backend "s3" {
-    bucket = "noticast-state"
-    key = "terraform-state"
-  }
-}
+# }}}
 
-# REST API access point
+# {{{ REST API access point
 
 provider "aws" {
   region = "us-east-1"
@@ -69,7 +79,10 @@ resource "aws_api_gateway_integration" "messages-lambda" {
   uri = "${aws_lambda_function.message-lambda.invoke_arn}"
 }
 
+# }}}
+
 /*
+# route53 configuration {{{
 resource "aws_route53_zone" "primary" {
   name = "${var.root_name}"
 }
@@ -124,7 +137,10 @@ resource "aws_api_gateway_domain_name" "messages-api" {
     types = ["EDGE"]
   }
 }
+# }}}
 */
+
+# lambda configuration {{{
 
 resource "aws_lambda_permission" "messages-lambda" {
   action = "lambda:InvokeFunction"
@@ -151,7 +167,8 @@ resource "aws_iam_role" "lambda-aws-role" {
 
 data "aws_iam_policy_document" "lambda-aws-policy" {
   statement {
-    actions = ["iot:Publish", "s3:*", "polly:*"]
+    # I just flat out don't know what's required, so...
+    actions = ["iot:Publish", "s3:*", "polly:*", "cloudwatch:*", "logs:*"]
     resources = ["*"]
   }
 }
@@ -177,8 +194,9 @@ resource "aws_lambda_function" "message-lambda" {
   runtime = "python3.6"
 }
 
-# IoT policy for the devices
-# Since Terraform doesn't have good AWS IoT support... JSON in a heredoc.
+# }}}
+
+# IoT policy for the devices {{{
 
 data "aws_iam_policy_document" "devices-policy" {
   statement {
@@ -193,14 +211,15 @@ resource "aws_iot_policy" "devices-policy" {
   policy = "${data.aws_iam_policy_document.devices-policy.json}"
 }
 
-# Set up notifications, sent by lambda, received by IoT devices
+# }}}
 
+# Set up notifications, sent by lambda, received by IoT devices {{{
 resource "aws_sns_topic" "play-message" {
   name = "play-message"
 }
+# }}}
 
-# Set up an S3 bucket for storing the mp3s before playing them
-
+# Set up an S3 bucket for storing the mp3s before playing them {{{
 resource "aws_s3_bucket" "messages" {
   bucket = "${var.bucket_name}"
   acl = "public-read"
@@ -213,8 +232,9 @@ resource "aws_s3_bucket" "messages" {
     }
   }
 }
+# }}}
 
-# Set up and print out an API key for the lambda
+# API key and deployment setup {{{
 
 resource "aws_api_gateway_api_key" "messages-lambda" {
   provider = "aws.edge"
@@ -256,6 +276,117 @@ resource "aws_api_gateway_usage_plan_key" "master" {
   key_type = "API_KEY"
   usage_plan_id = "${aws_api_gateway_usage_plan.master.id}"
 }
+
+# }}}
+
+# Relational Database System [MySQL] {{{
+resource "aws_db_instance" "main" {
+  allocated_storage    = 10
+  engine               = "mysql"
+  engine_version       = "5.7"
+  instance_class       = "db.t2.micro"
+  username             = "testing"
+  password             = "herpderp"
+}
+# }}}
+
+# Elastic Beanstalk Application {{{
+data "aws_iam_policy_document" "noticast_web" {
+  statement {
+    # Actions {{{
+    actions = [
+      "iot:AddThingToThingGroup",
+      "iot:AttachPolicy",
+      "iot:AttachThingPrincipal",
+      "iot:CreateKeysAndCertificate",
+      "iot:CreateThing",
+      "iot:CreateThingGroup",
+      "iot:DeleteCertificate",
+      "iot:DeleteThing",
+      "iot:DeleteThingGroup",
+      "iot:DetachThingPrincipal",
+      "iot:DescribeEndpoint",
+      "iot:DescribeThing",
+      "iot:DescribeThingGroup",
+      "iot:ListCertificates",
+      "iot:ListThings",
+      "iot:ListThingGroups",
+      "iot:ListThingsInThingGroup",
+      "iot:ListThingGroupsForThing",
+      "iot:ListThingPrincipals",
+      "iot:Publish",
+      "iot:RemoveThingFromThingGroup",
+      "iot:UpdateThing",
+      "iot:UpdateCertificate",
+      "iot:UpdateThingGroup",
+      "iot:UpdateThingGroupsForThing"
+    ]
+    # }}}
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "noticast_web" {
+  policy = "${data.aws_iam_policy_document.noticast_web.json}"
+}
+
+resource "aws_iam_user" "noticast_web" {
+  name = "noticast_web"
+}
+
+resource "aws_iam_access_key" "noticast_web" {
+  user = "${aws_iam_user.noticast_web.name}"
+}
+
+resource "aws_iam_user_policy_attachment" "noticast_web" {
+  user = "${aws_iam_user.noticast_web.name}"
+  policy_arn = "${aws_iam_policy.noticast_web.arn}"
+}
+
+/*
+resource "aws_elastic_beanstalk_application" "noticast_web" {
+  name = "noticast_web"
+  description = "NotiCast website"
+}
+
+resource "aws_elastic_beanstalk_environment" "noticast_web" {
+  application = "noticast_web"
+  cname_prefix = "app"
+
+  solution_stack_name = "64bit Amazon Linux 2016.09 v2.5.2 running Docker 1.12.6"
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "AWS_ACCESS_KEY_ID"
+    value = "${aws_iam_access_key.noticast_web.id}"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "AWS_SECRET_KEY_ID"
+    value = "${aws_iam_access_key.noticast_web.secret}"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "AWS_DEFAULT_REGION"
+    value = "${var.aws_region}"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "SECRET_KEY"
+    value = "${var.aws_region}"
+  }
+
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name = "SQLALCHEMY_DATABASE_URI"
+    value = "msyql+pymysql://${aws_db_instance.main.username}:${aws_db_instance.main.password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.name}"
+  }
+}
+*/
+# }}}
 
 output "api-url" {
   value = "${aws_api_gateway_deployment.messages-api.invoke_url}"

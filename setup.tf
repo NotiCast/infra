@@ -8,33 +8,6 @@ terraform {
   }
 }
 
-# Variables {{{
-variable "aws_region" {
-  type = "string"
-  default = "us-east-2"
-}
-
-provider "aws" {
-  region = "${var.aws_region}"
-}
-
-variable "bucket_name" {
-  type = "string"
-  default = "noticast-messages"
-}
-
-variable "root_name" {
-  type = "string"
-  default = "notica.st"
-}
-
-variable "domain_name" {
-  type = "string"
-  default = "api.notica.st"
-}
-
-# }}}
-
 # {{{ REST API access point
 
 provider "aws" {
@@ -280,17 +253,25 @@ resource "aws_api_gateway_usage_plan_key" "master" {
 # }}}
 
 # Relational Database System [MySQL] {{{
+
+resource "random_string" "noticast_web_database_password" {
+  length = 24
+  special = false
+}
+
 resource "aws_db_instance" "main" {
-  allocated_storage    = 10
-  engine               = "mysql"
-  engine_version       = "5.7"
-  instance_class       = "db.t2.micro"
-  username             = "testing"
-  password             = "herpderp"
+  name = "noticast"
+  allocated_storage = 10
+  engine = "mysql"
+  engine_version = "5.7"
+  instance_class = "db.t2.micro"
+  username = "noticast_web"
+  password = "${random_string.noticast_web_database_password.result}"
+  final_snapshot_identifier = "noticast-web-db"
 }
 # }}}
 
-# Elastic Beanstalk Application {{{
+# EC2 NotiCast Web Application {{{
 data "aws_iam_policy_document" "noticast_web" {
   statement {
     # Actions {{{
@@ -343,55 +324,14 @@ resource "aws_iam_user_policy_attachment" "noticast_web" {
   policy_arn = "${aws_iam_policy.noticast_web.arn}"
 }
 
-/*
-resource "aws_elastic_beanstalk_application" "noticast_web" {
-  name = "noticast_web"
-  description = "NotiCast website"
+resource "aws_default_vpc" "main" {}
+resource "aws_default_subnet" "main" {
+  availability_zone = "us-east-2a"
 }
 
-resource "aws_elastic_beanstalk_environment" "noticast_web" {
-  application = "noticast_web"
-  cname_prefix = "app"
-
-  solution_stack_name = "64bit Amazon Linux 2016.09 v2.5.2 running Docker 1.12.6"
-
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "AWS_ACCESS_KEY_ID"
-    value = "${aws_iam_access_key.noticast_web.id}"
-  }
-
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "AWS_SECRET_KEY_ID"
-    value = "${aws_iam_access_key.noticast_web.secret}"
-  }
-
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "AWS_DEFAULT_REGION"
-    value = "${var.aws_region}"
-  }
-
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "SECRET_KEY"
-    value = "${var.aws_region}"
-  }
-
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name = "SQLALCHEMY_DATABASE_URI"
-    value = "msyql+pymysql://${aws_db_instance.main.username}:${aws_db_instance.main.password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.name}"
-  }
+resource "random_string" "noticast_web_secret_key" {
+  length = 24
+  special = true
 }
-*/
+
 # }}}
-
-output "api-url" {
-  value = "${aws_api_gateway_deployment.messages-api.invoke_url}"
-}
-
-output "api-key" {
-  value = "${aws_api_gateway_api_key.messages-lambda.value}"
-}

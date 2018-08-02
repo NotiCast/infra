@@ -8,6 +8,8 @@ setup-pre:
 
 deploy:
 	terraform apply terraform.apply
+	terraform output -json > vendor/noticast_web/ansible/vars/terraform.json
+	ansible-playbook vendor/noticast_web/ansible/main.yml
 
 deploy-pre:
 	terraform apply terraform.pre.apply

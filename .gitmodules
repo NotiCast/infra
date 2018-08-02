@@ -1,3 +1,6 @@
 [submodule "vendor/message-lambda"]
 	path = vendor/message-lambda
 	url = git@github.com:NotiCast/message-lambda
+[submodule "noticast_web"]
+	path = vendor/noticast_web
+	url = git@github.com:NotiCast/web

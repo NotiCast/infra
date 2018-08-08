@@ -97,6 +97,19 @@ resource "aws_lambda_function" "message-lambda" {
   handler = "lambda_function.lambda_handler"
   source_code_hash = "${base64sha256(file("message_lambda.zip"))}"
   runtime = "python3.6"
+
+  vpc_config {
+    subnet_ids = ["${aws_subnet.private.id}"]
+    security_group_ids = ["${aws_default_security_group.main.id}"]
+  }
+
+  environment {
+    variables = {
+      sqlalchemy_db_endpoint = "${aws_db_instance.main.endpoint}"
+      sqlalchemy_db_auth = "${aws_db_instance.main.username}:${aws_db_instance.main.password}"
+      sqlalchemy_db_name = "${aws_db_instance.main.name}"
+    }
+  }
 }
 
 # }}}

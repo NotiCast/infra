@@ -72,14 +72,34 @@ resource "aws_iam_user_policy_attachment" "noticast_web" {
   policy_arn = "${aws_iam_policy.noticast_web.arn}"
 }
 
-resource "aws_default_vpc" "main" {}
-resource "aws_default_subnet" "main" {
-  availability_zone = "us-east-2a"
-}
-
 resource "random_string" "noticast_web_secret_key" {
   length = 24
   special = true
 }
 
+/*
+resource "aws_ami" "debian_stretch" {
+  most_recent = true
+
+  filter {
+    name = "virtualization-type"
+    value = "hvm"
+  }
+
+  filter {
+    name = "name"
+    values = ["debian-stretch-hvm-x86_64-*"]
+  }
+
+  owners = ["379101102735"]
+}
+
+resource "aws_instance" "noticast_web" {
+  count = "3"
+  # FQDN
+  name = "node${count.index}.nodes.noticast.info"
+
+  instance_type = "t2.micro"
+}
+*/
 # }}}

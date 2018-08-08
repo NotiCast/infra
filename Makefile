@@ -1,4 +1,4 @@
-.PHONY: setup deploy setup-pre deploy-pre
+.PHONY: setup deploy setup-pre deploy-pre deploy-terraform deploy-ansible
 
 PYTHON_VERSION ?= python3.6
 LAMBDA_FILES = lambda_function.py rds_models/*
@@ -18,9 +18,15 @@ message_lambda.zip:
 setup-pre:
 	terraform plan -target aws_route53_zone.primary -out terraform.pre.apply pre/
 
-deploy:
+deploy: deploy-terraform deploy-ansible
+
+deploy-terraform:
 	terraform apply terraform.apply
+
+vendor/noticast_web/ansible/vars/terraform.json:
 	terraform output -json > vendor/noticast_web/ansible/vars/terraform.json
+
+deploy-ansible: vendor/noticast_web/ansible/vars/terraform.json
 	ansible-playbook vendor/noticast_web/ansible/main.yml
 
 deploy-pre:

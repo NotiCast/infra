@@ -2,12 +2,16 @@
 
 PYTHON_VERSION ?= python3.6
 LAMBDA_FILES = lambda_function.py rds_models/*
+ANSIBLE_JSON_FILE = vendor/noticast_web/ansible/vars/terraform.json
+# Change to release *versions*
+NOTICAST_WEB_VERSION = master
+NOTICAST_WEB_REPO = git+https://github.com/NotiCast/web@$(NOTICAST_WEB_VERSION)
 
 setup: message_lambda.zip
 	terraform plan -out=terraform.apply
 
 clean:
-	rm message_lambda.zip terraform.apply vendor/noticast_web/ansible/vars/terraform.json || true
+	rm message_lambda.zip terraform.apply hosts $(ANSIBLE_JSON_FILE) || true
 
 message_lambda.zip:
 	cd vendor/message-lambda/libs/lib/$(PYTHON_VERSION)/site-packages && \
@@ -16,17 +20,25 @@ message_lambda.zip:
 		zip -g ../../message_lambda.zip $(LAMBDA_FILES)
 
 setup-pre:
-	terraform plan -target aws_route53_zone.primary -out terraform.pre.apply pre/
+	terraform plan -target aws_route53_zone.primary -out \
+		terraform.pre.apply pre/
 
 deploy: deploy-terraform deploy-ansible
 
 deploy-terraform:
 	terraform apply terraform.apply
 
-vendor/noticast_web/ansible/vars/terraform.json:
-	terraform output -json > vendor/noticast_web/ansible/vars/terraform.json
+$(ANSIBLE_JSON_FILE):
+	terraform output -json > $(ANSIBLE_JSON_FILE)
 
-deploy-ansible: vendor/noticast_web/ansible/vars/terraform.json
+hosts: $(ANSIBLE_JSON_FILE)
+	echo '[noticast_web]' > hosts
+	jq -r '.noticast_ips.value[]' < $(ANSIBLE_JSON_FILE) >> hosts
+	echo >> hosts
+	echo '[noticast_web:vars]' >> hosts
+	echo noticast_package=$(NOTICAST_WEB_REPO) >> hosts
+
+deploy-ansible: $(ANSIBLE_JSON_FILE) hosts
 	ansible-playbook vendor/noticast_web/ansible/main.yml
 
 deploy-pre:

@@ -12,19 +12,29 @@ variable "bucket_name" {
   default = "noticast-messages"
 }
 
-variable "root_name" {
-  type = "string"
-  default = "notica.st"
-}
-
 variable "domain_name" {
   type = "string"
-  default = "api.notica.st"
+  default = "notica.st"
 }
 
 variable "noticast_web_stage" {
   type = "string"
   default = "development"
+}
+
+variable "noticast_web_stage_domain_name" {
+  type = "string"
+  default = "dev"
+}
+
+variable "noticast_shell_server_deploy_key" {
+  type = "string"
+  default = "Ryan-Yubikey"
+}
+
+variable "noticast_web_server_count" {
+  type = "string"
+  default = "3"
 }
 
 variable "subnet_azs" {

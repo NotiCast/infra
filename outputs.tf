@@ -18,3 +18,11 @@ output "noticast" {
     }
   }
 }
+
+output "noticast_ips" {
+  value = "${aws_instance.noticast_web.*.public_ip}"
+}
+
+output "noticast_url" {
+  value = "${aws_elb.noticast_web.dns_name}"
+}

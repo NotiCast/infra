@@ -9,12 +9,12 @@ terraform {
 }
 
 
-/*
 # route53 configuration {{{
 resource "aws_route53_zone" "primary" {
-  name = "${var.root_name}"
+  name = "${var.domain_name}"
 }
 
+/*
 resource "aws_route53_record" "messages-api" {
   provider = "aws.edge"
 

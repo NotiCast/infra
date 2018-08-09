@@ -77,13 +77,12 @@ resource "random_string" "noticast_web_secret_key" {
   special = true
 }
 
-/*
-resource "aws_ami" "debian_stretch" {
+data "aws_ami" "debian_stretch" {
   most_recent = true
 
   filter {
     name = "virtualization-type"
-    value = "hvm"
+    values = ["hvm"]
   }
 
   filter {
@@ -95,11 +94,64 @@ resource "aws_ami" "debian_stretch" {
 }
 
 resource "aws_instance" "noticast_web" {
-  count = "3"
+  count = "${var.noticast_web_server_count}"
   # FQDN
-  name = "node${count.index}.nodes.noticast.info"
+  ami = "${data.aws_ami.debian_stretch.id}"
+  # TODO check if can use default security group without default VPC
+
+  vpc_security_group_ids = ["${aws_default_security_group.main.id}"]
+  key_name = "${var.noticast_shell_server_deploy_key}"
+  associate_public_ip_address = true
 
   instance_type = "t2.micro"
+
+  tags = {
+    Name = "node${count.index}.nodes.noticast.info"
+  }
+}
+# }}}
+
+# TLS Terminator / Load Balancer {{{
+resource "aws_elb" "noticast_web" {
+  availability_zones = "${var.subnet_azs}"
+  listener {
+    instance_port = 80
+    instance_protocol = "http"
+    # TODO change to 443, HTTPS
+    lb_port = 80
+    lb_protocol = "http"
+  }
+
+  instances = ["${aws_instance.noticast_web.*.id}"]
+  cross_zone_load_balancing = true
+}
+
+resource "aws_route53_record" "noticast_web" {
+  zone_id = "${aws_route53_zone.primary.zone_id}"
+  name = "${var.noticast_web_stage_domain_name}.${var.domain_name}"
+  type = "A"
+
+  alias {
+    name = "${aws_elb.noticast_web.dns_name}"
+    zone_id = "${aws_elb.noticast_web.zone_id}"
+    evaluate_target_health = false
+  }
+}
+
+/*
+resource "aws_acm_certificate" "noticast_web" {
+  domain_name = "${var.domain_name}"
+  validation_method = "DNS"
+}
+
+resource "aws_route53_record" "noticast_web-cert-validation" {
+  zone_id = "${aws_route53_zone.primary.zone_id}"
+  name = "${aws_acm_certificate.noticast_web.domain_validation_options.0.resource_record_name}"
+}
+
+resource "aws_acm_certificate_validation" "noticast_web" {
+  certificate_arn = "${aws_acm_certificate.noticast_web.arn}"
+  validation_record_fqdns = ["${aws_route53_record.noticast_web-certificate-validation.fqdn}"]
 }
 */
 # }}}

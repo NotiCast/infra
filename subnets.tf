@@ -14,12 +14,18 @@ resource "aws_default_security_group" "main" {
     to_port = 0
   }
 
-  # TODO change pre-ELB
   ingress {
     protocol = "TCP"
     cidr_blocks = ["0.0.0.0/0"]
     from_port = 80
     to_port = 80
+  }
+
+  ingress {
+    protocol = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 443
+    to_port = 443
   }
 
   ingress {

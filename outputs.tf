@@ -16,6 +16,7 @@ output "noticast" {
       access_key = "${aws_iam_access_key.noticast_web.id}"
       secret_key = "${aws_iam_access_key.noticast_web.secret}"
     }
+    sentry_dsn = "${var.sentry_dsn_noticast_web}"
   }
 }
 

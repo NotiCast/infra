@@ -14,7 +14,7 @@ variable "bucket_name" {
 
 variable "domain_name" {
   type = "string"
-  default = "notica.st"
+  default = "noticast.io"
 }
 
 variable "noticast_web_stage" {
@@ -55,4 +55,9 @@ variable "private_subnet_cidr" {
 variable "private_subnet_ips" {
   type = "list"
   default = ["172.31.17.161"]  # who knows that's what they gave me
+}
+
+variable "sentry_dsn_noticast_web" {
+  type = "string"
+  default = "https://e9a4a3c273a6470c8ded06978dae8112:13a7e4334a0e413d91d7d7958300d68f@sentry.io/1261427"
 }

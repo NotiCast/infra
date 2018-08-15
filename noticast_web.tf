@@ -96,8 +96,8 @@ data "aws_ami" "debian_stretch" {
 resource "aws_instance" "noticast_web" {
   count = "${var.noticast_web_server_count}"
   # FQDN
-  ami = "${data.aws_ami.debian_stretch.id}"
-  # TODO check if can use default security group without default VPC
+  #ami = "${data.aws_ami.debian_stretch.id}"
+  ami = "ami-0a125ad0c27a7794a"
 
   vpc_security_group_ids = ["${aws_default_security_group.main.id}"]
   key_name = "${var.noticast_shell_server_deploy_key}"
@@ -114,10 +114,19 @@ resource "aws_instance" "noticast_web" {
 # TLS Terminator / Load Balancer {{{
 resource "aws_elb" "noticast_web" {
   availability_zones = "${var.subnet_azs}"
+  security_groups = ["${aws_default_security_group.main.id}"]
+
   listener {
     instance_port = 80
     instance_protocol = "http"
-    # TODO change to 443, HTTPS
+    lb_port = 443
+    lb_protocol = "https"
+    ssl_certificate_id = "${aws_acm_certificate_validation.noticast_web.certificate_arn}"
+  }
+
+  listener {
+    instance_port = 80
+    instance_protocol = "http"
     lb_port = 80
     lb_protocol = "http"
   }
@@ -128,7 +137,7 @@ resource "aws_elb" "noticast_web" {
 
 resource "aws_route53_record" "noticast_web" {
   zone_id = "${aws_route53_zone.primary.zone_id}"
-  name = "${var.noticast_web_stage_domain_name}.${var.domain_name}"
+  name = "${var.domain_name}"
   type = "A"
 
   alias {
@@ -138,7 +147,6 @@ resource "aws_route53_record" "noticast_web" {
   }
 }
 
-/*
 resource "aws_acm_certificate" "noticast_web" {
   domain_name = "${var.domain_name}"
   validation_method = "DNS"
@@ -147,11 +155,14 @@ resource "aws_acm_certificate" "noticast_web" {
 resource "aws_route53_record" "noticast_web-cert-validation" {
   zone_id = "${aws_route53_zone.primary.zone_id}"
   name = "${aws_acm_certificate.noticast_web.domain_validation_options.0.resource_record_name}"
+  type = "${aws_acm_certificate.noticast_web.domain_validation_options.0.resource_record_type}"
+
+  records = ["${aws_acm_certificate.noticast_web.domain_validation_options.0.resource_record_value}"]
+  ttl = 60
 }
 
 resource "aws_acm_certificate_validation" "noticast_web" {
   certificate_arn = "${aws_acm_certificate.noticast_web.arn}"
-  validation_record_fqdns = ["${aws_route53_record.noticast_web-certificate-validation.fqdn}"]
+  validation_record_fqdns = ["${aws_route53_record.noticast_web-cert-validation.fqdn}"]
 }
-*/
 # }}}

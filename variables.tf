@@ -1,6 +1,6 @@
 variable "aws_region" {
   type = "string"
-  default = "us-east-2"
+  default = "us-east-1"
 }
 
 provider "aws" {
@@ -9,12 +9,17 @@ provider "aws" {
 
 variable "bucket_name" {
   type = "string"
-  default = "noticast-messages"
+  default = "noticast-outgoing-messages"
 }
 
 variable "domain_name" {
   type = "string"
   default = "noticast.io"
+}
+
+variable "incoming_email_subdomain" {
+  type = "string"
+  default = "send"
 }
 
 variable "noticast_web_stage" {
@@ -39,7 +44,7 @@ variable "noticast_web_server_count" {
 
 variable "subnet_azs" {
   type = "list"
-  default = ["us-east-2a", "us-east-2b", "us-east-2c"]
+  default = ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f"]
 }
 
 variable "vpc_cidr" {
@@ -49,12 +54,12 @@ variable "vpc_cidr" {
 
 variable "private_subnet_cidr" {
   type = "string"
-  default = "172.31.48.0/20"
+  default = "172.31.96.0/20"
 }
 
 variable "private_subnet_ips" {
   type = "list"
-  default = ["172.31.17.161"]  # who knows that's what they gave me
+  default = ["172.31.47.124"]
 }
 
 variable "sentry_dsn_noticast_web" {

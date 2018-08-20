@@ -16,6 +16,8 @@ resource "aws_db_instance" "main" {
   username = "noticast_web"
   password = "${random_string.noticast_web_database_password.result}"
   final_snapshot_identifier = "noticast-web-db"
+
+  depends_on = ["aws_network_interface.gateway"]
 }
 # }}}
 
@@ -96,11 +98,10 @@ data "aws_ami" "debian_stretch" {
 resource "aws_instance" "noticast_web" {
   count = "${var.noticast_web_server_count}"
   # FQDN
-  #ami = "${data.aws_ami.debian_stretch.id}"
-  ami = "ami-0a125ad0c27a7794a"
+  ami = "${data.aws_ami.debian_stretch.id}"
 
   vpc_security_group_ids = ["${aws_default_security_group.main.id}"]
-  key_name = "${var.noticast_shell_server_deploy_key}"
+  key_name = "deployer-key"
   associate_public_ip_address = true
 
   instance_type = "t2.micro"
@@ -108,6 +109,8 @@ resource "aws_instance" "noticast_web" {
   tags = {
     Name = "node${count.index}.nodes.noticast.info"
   }
+
+  depends_on = ["aws_network_interface.gateway"]
 }
 # }}}
 

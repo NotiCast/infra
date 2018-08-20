@@ -89,12 +89,6 @@ resource "aws_iot_policy" "devices-policy" {
 
 # }}}
 
-# Set up notifications, sent by lambda, received by IoT devices {{{
-resource "aws_sns_topic" "play-message" {
-  name = "play-message"
-}
-# }}}
-
 # Set up an S3 bucket for storing the mp3s before playing them {{{
 resource "aws_s3_bucket" "messages" {
   bucket = "${var.bucket_name}"

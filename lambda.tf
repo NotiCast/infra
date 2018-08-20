@@ -41,16 +41,24 @@ resource "aws_api_gateway_integration" "messages-lambda" {
   integration_http_method = "POST"
   type = "AWS_PROXY"
   uri = "${aws_lambda_function.message-lambda.invoke_arn}"
+
+  depends_on = ["aws_lambda_permission.gateway-lambda-permission"]
 }
 
 # }}}
 
 # {{{ Lambda
 
-resource "aws_lambda_permission" "messages-lambda" {
+resource "aws_lambda_permission" "gateway-lambda-permission" {
   action = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.message-lambda.arn}"
   principal = "apigateway.amazonaws.com"
+}
+
+resource "aws_lambda_permission" "ses-lambda-permission" {
+  action = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.message-lambda.arn}"
+  principal = "ses.amazonaws.com"
 }
 
 # IAM role and policy for the lambda
@@ -108,6 +116,7 @@ resource "aws_lambda_function" "message-lambda" {
       sqlalchemy_db_endpoint = "${aws_db_instance.main.endpoint}"
       sqlalchemy_db_auth = "${aws_db_instance.main.username}:${aws_db_instance.main.password}"
       sqlalchemy_db_name = "${aws_db_instance.main.name}"
+      messages_bucket = "${var.bucket_name}"
     }
   }
 }
@@ -126,7 +135,7 @@ resource "aws_api_gateway_deployment" "messages-api" {
 
   depends_on = ["aws_api_gateway_integration.messages-lambda"]
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-  stage_name  = "test"
+  stage_name  = "${aws_api_gateway_usage_plan.master.api_stages.0.stage}"
 }
 
 /*
@@ -146,7 +155,7 @@ resource "aws_api_gateway_usage_plan" "master" {
 
   api_stages {
     api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-    stage = "${aws_api_gateway_deployment.messages-api.stage_name}"
+    stage = "test"
   }
 }
 

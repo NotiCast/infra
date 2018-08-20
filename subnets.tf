@@ -49,11 +49,12 @@ resource "aws_subnet" "private" {
 }
 
 resource "aws_network_interface" "gateway" {
-  description = "Interface for NAT Gateway nat-0a511e75864098026"
-  subnet_id = "${aws_default_subnet.main.1.id}"
+  description = "Interface for NAT Gateway nat-0979d6c45f68c5713"
+  subnet_id = "${aws_default_subnet.main.0.id}"
   private_ips = "${var.private_subnet_ips}"
   source_dest_check = false
   # security_groups = ["${aws_default_security_group.main.id}"]
+  depends_on = ["aws_default_subnet.main"]
 }
 
 resource "aws_eip" "private-nat" {
@@ -63,7 +64,7 @@ resource "aws_eip" "private-nat" {
 
 resource "aws_nat_gateway" "private-gateway" {
   allocation_id = "${aws_eip.private-nat.id}"
-  subnet_id = "${aws_default_subnet.main.1.id}"
+  subnet_id = "${aws_default_subnet.main.0.id}"
 }
 
 resource "aws_route_table" "private" {

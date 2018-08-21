@@ -1,13 +1,7 @@
 # vim:set et sw=2 ts=2 foldmethod=marker:
 
 # {{{ Rest API
-provider "aws" {
-  region = "us-east-1"
-  alias = "edge"
-}
-
 resource "aws_api_gateway_rest_api" "messages-api" {
-  provider = "aws.edge"
   name = "messages-api"
 
   endpoint_configuration = {
@@ -16,16 +10,12 @@ resource "aws_api_gateway_rest_api" "messages-api" {
 }
 
 resource "aws_api_gateway_resource" "messages-endpoint" {
-  provider = "aws.edge"
-
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   parent_id = "${aws_api_gateway_rest_api.messages-api.root_resource_id}"
   path_part = "send_message"
 }
 
 resource "aws_api_gateway_method" "messages-endpoint-method" {
-  provider = "aws.edge"
-
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   resource_id = "${aws_api_gateway_resource.messages-endpoint.id}"
   http_method = "POST"
@@ -33,8 +23,6 @@ resource "aws_api_gateway_method" "messages-endpoint-method" {
 }
 
 resource "aws_api_gateway_integration" "messages-lambda" {
-  provider = "aws.edge"
-
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   resource_id = "${aws_api_gateway_resource.messages-endpoint.id}"
   http_method = "${aws_api_gateway_method.messages-endpoint-method.http_method}"
@@ -127,13 +115,10 @@ resource "aws_lambda_function" "message-lambda" {
 # API key and deployment setup {{{
 
 resource "aws_api_gateway_api_key" "messages-lambda" {
-  provider = "aws.edge"
   name = "master-key-2"
 }
 
 resource "aws_api_gateway_deployment" "messages-api" {
-  provider = "aws.edge"
-
   depends_on = ["aws_api_gateway_integration.messages-lambda"]
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   stage_name  = "${aws_api_gateway_usage_plan.master.api_stages.0.stage}"
@@ -141,8 +126,6 @@ resource "aws_api_gateway_deployment" "messages-api" {
 
 /*
 resource "aws_api_gateway_base_path_mapping" "messages-api" {
-  provider = "aws.edge"
-
   depends_on = ["aws_api_gateway_domain_name.messages-api"]
   api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   stage_name = "${aws_api_gateway_deployment.messages-api.stage_name}"
@@ -151,7 +134,6 @@ resource "aws_api_gateway_base_path_mapping" "messages-api" {
 */
 
 resource "aws_api_gateway_usage_plan" "master" {
-  provider = "aws.edge"
   name = "master_plan"
 
   api_stages {
@@ -161,11 +143,9 @@ resource "aws_api_gateway_usage_plan" "master" {
 }
 
 resource "aws_api_gateway_usage_plan_key" "master" {
-  provider = "aws.edge"
   key_id = "${aws_api_gateway_api_key.messages-lambda.id}"
   key_type = "API_KEY"
   usage_plan_id = "${aws_api_gateway_usage_plan.master.id}"
 }
 
 # }}}
-

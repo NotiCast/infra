@@ -16,8 +16,6 @@ resource "aws_route53_zone" "primary" {
 
 /*
 resource "aws_route53_record" "messages-api" {
-  provider = "aws.edge"
-
   zone_id = "${aws_route53_zone.primary.zone_id}"
   name = "${aws_api_gateway_domain_name.messages-api.domain_name}"
   type = "A"
@@ -38,15 +36,11 @@ resource "aws_route53_record" "messages-api-cert-validation" {
 }
 
 resource "aws_acm_certificate" "messages-api" {
-  provider = "aws.edge"
-
   domain_name = "${var.domain_name}"
   validation_method = "DNS"
 }
 
 resource "aws_acm_certificate_validation" "messages-api" {
-  provider = "aws.edge"
-
   certificate_arn = "${aws_acm_certificate.messages-api.arn}"
   validation_record_fqdns = ["${aws_route53_record.messages-api-cert-validation.fqdn}"]
 }
@@ -60,8 +54,6 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_api_gateway_domain_name" "messages-api" {
-  provider = "aws.edge"
-
   domain_name = "${var.domain_name}"
 
   certificate_arn = "${aws_acm_certificate.messages-api.arn}"

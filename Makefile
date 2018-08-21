@@ -1,4 +1,5 @@
-.PHONY: setup deploy setup-pre deploy-pre deploy-terraform deploy-ansible
+.PHONY: setup deploy setup-pre deploy-pre deploy-terraform deploy-ansible \
+	fullclean clean
 
 PYTHON_VERSION ?= python3.6
 LAMBDA_FILES = lambda_function.py rds_models/*
@@ -10,8 +11,11 @@ NOTICAST_WEB_REPO = git+https://github.com/NotiCast/web@$(NOTICAST_WEB_VERSION)
 setup: message_lambda.zip
 	terraform plan -out=terraform.apply
 
+fullclean: clean
+	rm message_lambda.zip
+
 clean:
-	rm message_lambda.zip terraform.apply hosts $(ANSIBLE_JSON_FILE) || true
+	rm terraform.apply hosts $(ANSIBLE_JSON_FILE) || true
 
 message_lambda.zip:
 	cd vendor/message-lambda/libs/lib/$(PYTHON_VERSION)/site-packages && \

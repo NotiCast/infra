@@ -117,6 +117,7 @@ resource "aws_lambda_function" "message-lambda" {
       sqlalchemy_db_auth = "${aws_db_instance.main.username}:${aws_db_instance.main.password}"
       sqlalchemy_db_name = "${aws_db_instance.main.name}"
       messages_bucket = "${var.bucket_name}"
+      email_domain = "${aws_ses_domain_identity.primary.domain}"
     }
   }
 }

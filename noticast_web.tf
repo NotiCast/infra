@@ -107,7 +107,7 @@ resource "aws_instance" "noticast_web" {
   instance_type = "t2.micro"
 
   tags = {
-    Name = "node${count.index}.nodes.noticast.info"
+    Name = "node${count.index}.nodes.${var.domain_name}"
   }
 
   depends_on = ["aws_network_interface.gateway"]
@@ -136,6 +136,15 @@ resource "aws_elb" "noticast_web" {
 
   instances = ["${aws_instance.noticast_web.*.id}"]
   cross_zone_load_balancing = true
+}
+
+resource "aws_route53_record" "noticast-vms" {
+  count = "${var.noticast_web_server_count}"
+  zone_id = "${aws_route53_zone.primary.zone_id}"
+  name = "${element(aws_instance.noticast_web.*.tags.Name, count.index)}"
+  type = "A"
+  records = ["${element(aws_instance.noticast_web.*.public_ip, count.index)}"]
+  ttl = "60"
 }
 
 resource "aws_route53_record" "noticast_web" {

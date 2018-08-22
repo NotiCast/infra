@@ -121,24 +121,22 @@ resource "aws_api_gateway_api_key" "messages-lambda" {
 resource "aws_api_gateway_deployment" "messages-api" {
   depends_on = ["aws_api_gateway_integration.messages-lambda"]
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-  stage_name  = "${aws_api_gateway_usage_plan.master.api_stages.0.stage}"
+  stage_name  = "prod"
 }
 
-/*
 resource "aws_api_gateway_base_path_mapping" "messages-api" {
   depends_on = ["aws_api_gateway_domain_name.messages-api"]
   api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   stage_name = "${aws_api_gateway_deployment.messages-api.stage_name}"
   domain_name = "${aws_api_gateway_domain_name.messages-api.domain_name}"
 }
-*/
 
 resource "aws_api_gateway_usage_plan" "master" {
   name = "master_plan"
 
   api_stages {
     api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-    stage = "test"
+    stage = "${aws_api_gateway_deployment.messages-api.stage_name}"
   }
 }
 

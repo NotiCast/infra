@@ -24,7 +24,7 @@ variable "incoming_email_subdomain" {
 
 variable "noticast_web_stage" {
   type = "string"
-  default = "development"
+  default = "production"
 }
 
 variable "noticast_web_stage_domain_name" {

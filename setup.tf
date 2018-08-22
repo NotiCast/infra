@@ -14,7 +14,33 @@ resource "aws_route53_zone" "primary" {
   name = "${var.domain_name}"
 }
 
-/*
+resource "aws_acm_certificate" "messages-api" {
+  domain_name = "api.${var.domain_name}"
+  validation_method = "DNS"
+}
+
+resource "aws_route53_record" "messages-api-cert-validation" {
+  zone_id = "${aws_route53_zone.primary.zone_id}"
+  name = "${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_name}"
+  type = "${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_type}"
+  records = ["${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_value}"]
+  ttl = 60
+}
+
+resource "aws_acm_certificate_validation" "messages-api" {
+  certificate_arn = "${aws_acm_certificate.messages-api.arn}"
+  validation_record_fqdns = ["${aws_route53_record.messages-api-cert-validation.fqdn}"]
+}
+
+resource "aws_api_gateway_domain_name" "messages-api" {
+  domain_name = "${aws_acm_certificate.messages-api.domain_name}"
+
+  certificate_arn = "${aws_acm_certificate.messages-api.arn}"
+  endpoint_configuration = {
+    types = ["EDGE"]
+  }
+}
+
 resource "aws_route53_record" "messages-api" {
   zone_id = "${aws_route53_zone.primary.zone_id}"
   name = "${aws_api_gateway_domain_name.messages-api.domain_name}"
@@ -26,43 +52,7 @@ resource "aws_route53_record" "messages-api" {
     evaluate_target_health = true
   }
 }
-
-resource "aws_route53_record" "messages-api-cert-validation" {
-  zone_id = "${aws_route53_zone.primary.zone_id}"
-  name = "${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_name}"
-  type = "${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_type}"
-  records = ["${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_value}"]
-  ttl = 60
-}
-
-resource "aws_acm_certificate" "messages-api" {
-  domain_name = "${var.domain_name}"
-  validation_method = "DNS"
-}
-
-resource "aws_acm_certificate_validation" "messages-api" {
-  certificate_arn = "${aws_acm_certificate.messages-api.arn}"
-  validation_record_fqdns = ["${aws_route53_record.messages-api-cert-validation.fqdn}"]
-}
-
-resource "aws_route53_record" "cert_validation" {
-  name = "${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_name}"
-  type = "${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_type}"
-  zone_id = "${aws_route53_zone.primary.id}"
-  records = ["${aws_acm_certificate.messages-api.domain_validation_options.0.resource_record_value}"]
-  ttl = 60
-}
-
-resource "aws_api_gateway_domain_name" "messages-api" {
-  domain_name = "${var.domain_name}"
-
-  certificate_arn = "${aws_acm_certificate.messages-api.arn}"
-  endpoint_configuration = {
-    types = ["EDGE"]
-  }
-}
 # }}}
-*/
 
 # IoT policy for the devices {{{
 

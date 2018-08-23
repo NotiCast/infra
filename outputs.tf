@@ -9,7 +9,7 @@ output "api-key" {
 output "noticast" {
   value = {
     secret_key = "${random_string.noticast_web_secret_key.result}"
-    sqlalchemy_db_uri = "mysql+pymysql://${aws_db_instance.main.username}:${aws_db_instance.main.password}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.name}"
+    sqlalchemy_db_uri = "${module.noticast_db_prod.db_uri}"
     stage = "${var.noticast_web_stage}"
     aws = {
       region = "${var.aws_region}"
@@ -18,6 +18,10 @@ output "noticast" {
     }
     sentry_dsn = "${var.sentry_dsn_noticast_web}"
   }
+}
+
+output "noticast_ips_dev" {
+  value = "${module.noticast_web_prod.ec2_addresses}"
 }
 
 output "noticast_ips" {

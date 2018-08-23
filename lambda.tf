@@ -101,9 +101,9 @@ resource "aws_lambda_function" "message-lambda" {
 
   environment {
     variables = {
-      sqlalchemy_db_endpoint = "${aws_db_instance.main.endpoint}"
-      sqlalchemy_db_auth = "${aws_db_instance.main.username}:${aws_db_instance.main.password}"
-      sqlalchemy_db_name = "${aws_db_instance.main.name}"
+      sqlalchemy_db_endpoint = "${module.noticast_db_prod.db_endpoint}"
+      sqlalchemy_db_auth = "${module.noticast_db_prod.db_username}:${module.noticast_db_prod.db_password}"
+      sqlalchemy_db_name = "${module.noticast_db_prod.db_name}"
       messages_bucket = "${var.bucket_name}"
       email_domain = "${aws_ses_domain_identity.primary.domain}"
     }

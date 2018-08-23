@@ -1,26 +1,5 @@
 # vim:set et sw=2 ts=2 foldmethod=marker:
 
-# Relational Database System [MySQL] {{{
-
-resource "random_string" "noticast_web_database_password" {
-  length = 24
-  special = false
-}
-
-resource "aws_db_instance" "main" {
-  name = "noticast"
-  allocated_storage = 10
-  engine = "mysql"
-  engine_version = "5.7"
-  instance_class = "db.t2.micro"
-  username = "noticast_web"
-  password = "${random_string.noticast_web_database_password.result}"
-  final_snapshot_identifier = "noticast-web-db"
-
-  depends_on = ["aws_network_interface.gateway"]
-}
-# }}}
-
 # EC2 NotiCast Web Application {{{
 data "aws_iam_policy_document" "noticast_web" {
   statement {

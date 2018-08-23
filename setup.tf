@@ -85,3 +85,26 @@ resource "aws_s3_bucket" "messages" {
   }
 }
 # }}}
+
+module "noticast_db_prod" {
+  source = "./modules/noticast_db"
+
+  db_user = "noticast_web"
+  db_name = "noticast"
+}
+
+module "noticast_web_prod" {
+  source = "./modules/noticast_web"
+
+  stage_name = "production"
+
+  server_count = "3"
+  security_group_ids = ["${aws_default_security_group.main.id}"]
+  elb_availability_zones = ["${var.subnet_azs}"]
+  ec2_key_name = "deployer-key"
+  domain_name = "uat.${var.domain_name}"
+  route53_zone_id = "${aws_route53_zone.primary.id}"
+  dummy_depends_on = ["${aws_network_interface.gateway.id}"]
+  aws_region = "${var.aws_region}"
+  aws_user = "noticast_web_production"
+}

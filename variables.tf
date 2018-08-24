@@ -66,3 +66,8 @@ variable "sentry_dsn_noticast_web" {
   type = "string"
   default = "https://e9a4a3c273a6470c8ded06978dae8112:13a7e4334a0e413d91d7d7958300d68f@sentry.io/1261427"
 }
+
+variable "sentry_dsn_lambda" {
+  type = "string"
+  default = "https://c18c105462e746ecaf312df90b860703:fd8fdd4e6cc54380ad96ef3231f1de34@sentry.io/1267850"
+}

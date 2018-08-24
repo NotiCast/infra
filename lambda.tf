@@ -106,6 +106,7 @@ resource "aws_lambda_function" "message-lambda" {
       sqlalchemy_db_name = "${module.noticast_db_prod.db_name}"
       messages_bucket = "${var.bucket_name}"
       email_domain = "${aws_ses_domain_identity.primary.domain}"
+      raven_endpoint = "${var.sentry_dsn_lambda}"
     }
   }
 }

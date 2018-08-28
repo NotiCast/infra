@@ -69,7 +69,7 @@ resource "aws_iam_role" "lambda-aws-role" {
 data "aws_iam_policy_document" "lambda-aws-policy" {
   statement {
     # I just flat out don't know what's required, so...
-    actions = ["iot:Publish", "s3:*", "polly:*", "cloudwatch:*", "logs:*"]
+    actions = ["iot:Publish", "s3:*", "polly:*", "cloudwatch:*", "logs:*", "ec2:*"]
     resources = ["*"]
   }
 }
@@ -146,5 +146,4 @@ resource "aws_api_gateway_usage_plan_key" "master" {
   key_type = "API_KEY"
   usage_plan_id = "${aws_api_gateway_usage_plan.master.id}"
 }
-
 # }}}

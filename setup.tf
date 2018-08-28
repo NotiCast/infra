@@ -108,3 +108,23 @@ module "noticast_web_prod" {
   aws_region = "${var.aws_region}"
   aws_user = "noticast_web_production"
 }
+
+module "lambda_uat" {
+  source = "./modules/lambda"
+
+  stage = "uat"
+  domain_name = "uat.${var.domain_name}"
+  route53_zone_id = "${aws_route53_zone.primary.id}"
+
+  filename = "message_lambda.zip"
+  function_name = "message_lambda"
+  subnet_ids = ["${aws_subnet.private.id}"]
+  security_group_ids = ["${aws_default_security_group.main.id}"]
+
+  db_auth = "${module.noticast_db_prod.db_username}:${module.noticast_db_prod.db_password}"
+  db_name = "${module.noticast_db_prod.db_name}"
+  db_endpoint = "${module.noticast_db_prod.db_endpoint}"
+  bucket_name = "${var.bucket_name}"
+  email_name = "${aws_ses_domain_identity.primary.domain}"
+  sentry_dsn = "${var.sentry_dsn_lambda}"
+}

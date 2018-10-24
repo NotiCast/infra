@@ -11,24 +11,24 @@ resource "aws_api_gateway_rest_api" "messages-api" {
 
 resource "aws_api_gateway_resource" "messages-endpoint" {
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-  parent_id = "${aws_api_gateway_rest_api.messages-api.root_resource_id}"
-  path_part = "send_message"
+  parent_id   = "${aws_api_gateway_rest_api.messages-api.root_resource_id}"
+  path_part   = "send_message"
 }
 
 resource "aws_api_gateway_method" "messages-endpoint-method" {
-  rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-  resource_id = "${aws_api_gateway_resource.messages-endpoint.id}"
-  http_method = "POST"
+  rest_api_id   = "${aws_api_gateway_rest_api.messages-api.id}"
+  resource_id   = "${aws_api_gateway_resource.messages-endpoint.id}"
+  http_method   = "POST"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "messages-lambda" {
-  rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-  resource_id = "${aws_api_gateway_resource.messages-endpoint.id}"
-  http_method = "${aws_api_gateway_method.messages-endpoint-method.http_method}"
+  rest_api_id             = "${aws_api_gateway_rest_api.messages-api.id}"
+  resource_id             = "${aws_api_gateway_resource.messages-endpoint.id}"
+  http_method             = "${aws_api_gateway_method.messages-endpoint-method.http_method}"
   integration_http_method = "POST"
-  type = "AWS_PROXY"
-  uri = "${aws_lambda_function.message-lambda.invoke_arn}"
+  type                    = "AWS_PROXY"
+  uri                     = "${aws_lambda_function.message-lambda.invoke_arn}"
 
   depends_on = ["aws_lambda_permission.gateway-lambda-permission"]
 }
@@ -38,15 +38,15 @@ resource "aws_api_gateway_integration" "messages-lambda" {
 # {{{ Lambda
 
 resource "aws_lambda_permission" "gateway-lambda-permission" {
-  action = "lambda:InvokeFunction"
+  action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.message-lambda.arn}"
-  principal = "apigateway.amazonaws.com"
+  principal     = "apigateway.amazonaws.com"
 }
 
 resource "aws_lambda_permission" "ses-lambda-permission" {
-  action = "lambda:InvokeFunction"
+  action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.message-lambda.arn}"
-  principal = "ses.amazonaws.com"
+  principal     = "ses.amazonaws.com"
 }
 
 # IAM role and policy for the lambda
@@ -54,59 +54,60 @@ resource "aws_lambda_permission" "ses-lambda-permission" {
 data "aws_iam_policy_document" "lambda-aws-role-policy" {
   statement {
     principals {
-      type = "Service",
+      type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
+
     actions = ["sts:AssumeRole"]
   }
 }
 
 resource "aws_iam_role" "lambda-aws-role" {
-  name = "lambda-aws"
+  name               = "lambda-aws"
   assume_role_policy = "${data.aws_iam_policy_document.lambda-aws-role-policy.json}"
 }
 
 data "aws_iam_policy_document" "lambda-aws-policy" {
   statement {
     # I just flat out don't know what's required, so...
-    actions = ["iot:Publish", "s3:*", "polly:*", "cloudwatch:*", "logs:*", "ec2:*"]
+    actions   = ["iot:Publish", "s3:*", "polly:*", "cloudwatch:*", "logs:*", "ec2:*"]
     resources = ["*"]
   }
 }
 
 resource "aws_iam_policy" "lambda-aws-policy" {
-  name = "lambda-aws-policy"
+  name   = "lambda-aws-policy"
   policy = "${data.aws_iam_policy_document.lambda-aws-policy.json}"
 }
 
 resource "aws_iam_role_policy_attachment" "lambda-aws-role-policy" {
-  role = "${aws_iam_role.lambda-aws-role.name}"
+  role       = "${aws_iam_role.lambda-aws-role.name}"
   policy_arn = "${aws_iam_policy.lambda-aws-policy.arn}"
 }
 
 # The lambda for signalling devices
 
 resource "aws_lambda_function" "message-lambda" {
-  filename = "message_lambda.zip"
-  function_name = "message_lambda"
-  role = "${aws_iam_role.lambda-aws-role.arn}"
-  handler = "lambda_function.lambda_handler"
+  filename         = "message_lambda.zip"
+  function_name    = "message_lambda"
+  role             = "${aws_iam_role.lambda-aws-role.arn}"
+  handler          = "lambda_function.lambda_handler"
   source_code_hash = "${base64sha256(file("message_lambda.zip"))}"
-  runtime = "python3.6"
+  runtime          = "python3.6"
 
   vpc_config {
-    subnet_ids = ["${aws_subnet.private.id}"]
+    subnet_ids         = ["${aws_subnet.private.id}"]
     security_group_ids = ["${aws_default_security_group.main.id}"]
   }
 
   environment {
     variables = {
       sqlalchemy_db_endpoint = "${module.noticast_db_prod.db_endpoint}"
-      sqlalchemy_db_auth = "${module.noticast_db_prod.db_username}:${module.noticast_db_prod.db_password}"
-      sqlalchemy_db_name = "${module.noticast_db_prod.db_name}"
-      messages_bucket = "${var.bucket_name}"
-      email_domain = "${aws_ses_domain_identity.primary.domain}"
-      raven_endpoint = "${var.sentry_dsn_lambda}"
+      sqlalchemy_db_auth     = "${module.noticast_db_prod.db_username}:${module.noticast_db_prod.db_password}"
+      sqlalchemy_db_name     = "${module.noticast_db_prod.db_name}"
+      messages_bucket        = "${var.bucket_name}"
+      email_domain           = "${aws_ses_domain_identity.primary.domain}"
+      raven_endpoint         = "${var.sentry_dsn_lambda}"
     }
   }
 }
@@ -120,15 +121,15 @@ resource "aws_api_gateway_api_key" "messages-lambda" {
 }
 
 resource "aws_api_gateway_deployment" "messages-api" {
-  depends_on = ["aws_api_gateway_integration.messages-lambda"]
+  depends_on  = ["aws_api_gateway_integration.messages-lambda"]
   rest_api_id = "${aws_api_gateway_rest_api.messages-api.id}"
   stage_name  = "prod"
 }
 
 resource "aws_api_gateway_base_path_mapping" "messages-api" {
-  depends_on = ["aws_api_gateway_domain_name.messages-api"]
-  api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-  stage_name = "${aws_api_gateway_deployment.messages-api.stage_name}"
+  depends_on  = ["aws_api_gateway_domain_name.messages-api"]
+  api_id      = "${aws_api_gateway_rest_api.messages-api.id}"
+  stage_name  = "${aws_api_gateway_deployment.messages-api.stage_name}"
   domain_name = "${aws_api_gateway_domain_name.messages-api.domain_name}"
 }
 
@@ -137,13 +138,15 @@ resource "aws_api_gateway_usage_plan" "master" {
 
   api_stages {
     api_id = "${aws_api_gateway_rest_api.messages-api.id}"
-    stage = "${aws_api_gateway_deployment.messages-api.stage_name}"
+    stage  = "${aws_api_gateway_deployment.messages-api.stage_name}"
   }
 }
 
 resource "aws_api_gateway_usage_plan_key" "master" {
-  key_id = "${aws_api_gateway_api_key.messages-lambda.id}"
-  key_type = "API_KEY"
+  key_id        = "${aws_api_gateway_api_key.messages-lambda.id}"
+  key_type      = "API_KEY"
   usage_plan_id = "${aws_api_gateway_usage_plan.master.id}"
 }
+
 # }}}
+

@@ -3,12 +3,12 @@ provider "aws" {
 }
 
 variable "bucket_name" {
-  type = "string"
+  type    = "string"
   default = "noticast-messages"
 }
 
 variable "domain_name" {
-  type = "string"
+  type    = "string"
   default = "notica.st"
 }
 
@@ -16,7 +16,7 @@ variable "domain_name" {
 terraform {
   backend "s3" {
     bucket = "noticast-state"
-    key = "terraform-state"
+    key    = "terraform-state"
   }
 }
 

@@ -1,6 +1,6 @@
 output "aws_info" {
   value = {
-    region = "${var.aws_region}"
+    region     = "${var.aws_region}"
     access_key = "${aws_iam_access_key.noticast_web.id}"
     secret_key = "${aws_iam_access_key.noticast_web.secret}"
   }

@@ -11,7 +11,7 @@ variable "elb_availability_zones" {
 }
 
 variable "ec2_key_name" {
-  type = "string"  # deployer-key
+  type = "string" # deployer-key
 }
 
 variable "domain_name" {

@@ -8,14 +8,16 @@ output "api-key" {
 
 output "noticast" {
   value = {
-    secret_key = "${random_string.noticast_web_secret_key.result}"
+    secret_key        = "${random_string.noticast_web_secret_key.result}"
     sqlalchemy_db_uri = "${module.noticast_db_prod.db_uri}"
-    stage = "${var.noticast_web_stage}"
+    stage             = "${var.noticast_web_stage}"
+
     aws = {
-      region = "${var.aws_region}"
+      region     = "${var.aws_region}"
       access_key = "${aws_iam_access_key.noticast_web.id}"
       secret_key = "${aws_iam_access_key.noticast_web.secret}"
     }
+
     sentry_dsn = "${var.sentry_dsn_noticast_web}"
   }
 }

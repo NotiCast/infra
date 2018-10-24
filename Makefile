@@ -5,7 +5,7 @@ PYTHON_VERSION ?= python3.6
 LAMBDA_FILES = lambda_function.py rds_models/*
 ANSIBLE_JSON_FILE = vendor/noticast_web/ansible/vars/terraform.json
 # Change to release *versions*
-NOTICAST_WEB_VERSION = v0.1.0
+NOTICAST_WEB_VERSION = v0.1.1
 
 setup: message_lambda.zip
 	terraform plan -out=terraform.apply

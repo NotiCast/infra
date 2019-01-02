@@ -1,27 +1,30 @@
-# infra
-AWS infrastructure setup scripts
+AWS infrastructure Terraform and Ansible automation
+
+**Note:** If you do not have a copy of the lambda ZIP file compatible with
+AWS Lambda servers, you need to at least clone the repository and run
+`make message_lambda.zip`, which should then be copyable to another system.
 
 To set up DNS nameservers:
 
 ```bash
-sh setup.sh --pre
+make setup-pre
 ```
 
 To set up the infrastructure:
 
 ```bash
-sh setup.sh
-terraform apply terraform.apply
+make
+make deploy
 ```
 
-`terraform apply` will not be included in the setup script as it can cause
-issues with the current Terraform state, and should be looked over before
-applying the state.
+`terraform apply` will not be included in the default Makefile target because
+of potential issues with the current Terraform state, and should be looked over
+before applying the state.
 
 ---
 
 A master API key, as well as the API URL, can be acquired from the Terraform
-output variables by running: `terraform apply`
+output variables by running: `terraform output`
 
 ## Routes
 

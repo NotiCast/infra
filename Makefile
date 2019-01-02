@@ -17,6 +17,7 @@ clean:
 	rm terraform.apply hosts $(ANSIBLE_JSON_FILE) || true
 
 message_lambda.zip:
+	$(MAKE) -C vendor/message-lambda
 	cd vendor/message-lambda/libs/lib/$(PYTHON_VERSION)/site-packages && \
 		zip -r9 ../../../../../../message_lambda.zip *
 	cd vendor/message-lambda && \

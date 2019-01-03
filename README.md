@@ -1,5 +1,8 @@
 AWS infrastructure Terraform and Ansible automation
 
+**Note:** This repository contains Git submodules and should be recursively
+cloned. This can be done by passing the `--recursive` flag to Git.
+
 **Note:** If you do not have a copy of the lambda ZIP file compatible with
 AWS Lambda servers, you need to at least clone the repository and run
 `make message_lambda.zip`, which should then be copyable to another system.

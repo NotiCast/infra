@@ -7,6 +7,30 @@ cloned. This can be done by passing the `--recursive` flag to Git.
 AWS Lambda servers, you need to at least clone the repository and run
 `make message_lambda.zip`, which should then be copyable to another system.
 
+### Dependencies
+
+- Terraform
+- Ansible
+- `jq`
+- Python 3.6 (or run Make with `PYTHON_VERSION=python3.<whatever>`)
+  - Also requires `virtualenv`
+
+### Configuring AWS Credentials
+
+
+The contents of `$HOME/.aws/credentials` should look like:
+
+```
+[default]
+aws_access_key_id = AKL0R3M1P5UMD0L0R
+aws_secret_access_key = SiTAmETConSECtetUrADiPISCing
+```
+
+These can be retrieved from your IAM account. You can test them with the `aws`
+command line utility.
+
+### Running
+
 To set up DNS nameservers:
 
 ```bash

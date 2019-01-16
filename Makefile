@@ -33,8 +33,7 @@ deploy-terraform:
 	terraform apply terraform.apply
 
 $(ANSIBLE_JSON_FILE):
-	cd vendor/noticast_web/ansible
-		mkdir vars
+	mkdir -p $(dir $(ANSIBLE_JSON_FILE))
 	terraform output -json > $(ANSIBLE_JSON_FILE)
 
 hosts: $(ANSIBLE_JSON_FILE)

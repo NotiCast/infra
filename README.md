@@ -74,6 +74,25 @@ make deploy
 of potential issues with the current Terraform state, and should be looked over
 before applying the state.
 
+### CLI Instructions
+
+- `git clone --recursive https://github.com/NotiCast/infra`
+- `cd infra`
+- `terraform init`
+- - (supply `us-east-2` as the desired area)
+- `make`
+-  check if vendor/noticast_web/ansible/vars exists, if not, `mkdir vars` there
+- SSH into node[0-2].nodes.uat.noticast.io to make sure they are stored in
+the SSH agent
+- `make deploy`
+
+At this point, everything should go off correctly. If not, check to make
+sure all the required dependencies are installed, that the SSH into the nodes
+and servers is working correctly (incorrect passwords, certificates, or keys 
+will cause an error/prompt/break everything).
+
+To push a new change to the website, run each of the commands from `make` on.
+
 ---
 
 A master API key, as well as the API URL, can be acquired from the Terraform

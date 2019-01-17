@@ -95,10 +95,10 @@ To push a new change to the website, run each of the commands from `make` on.
 
 ---
 
-A master API key, as well as the API URL, can be acquired from the Terraform
-output variables by running: `terraform output`
-
 ## Routes
+
+The API URL can be acquired from the Terraform output variables by running:
+`terraform output`
 
 #### `/send_message` [POST]
 

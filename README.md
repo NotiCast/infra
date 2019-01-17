@@ -106,6 +106,7 @@ Queue messages for NotiCast devices
 
 **Request Type:** JSON
 
+- `target: string` - Required - ARN of device or group to send message to
 - `message: string` - Required - Message to send to devices
 - `voice_id: string` - Optional - AWS Polly VoiceID to use
 - `testing: bool` - Optional - Don't send out messages to the devices
